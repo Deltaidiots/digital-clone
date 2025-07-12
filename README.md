@@ -6,6 +6,23 @@ Compared to the Ultralght-Digital-Human, we have improved the audio feature enco
 
 与Ultralght-Digital-Human相比，我们改进了音频特征编码器，并将分辨率提升至328以适应更高分辨率的输入视频。该版本可实现高清、商业级数字人。
 
+## Architecture
+
+SyncTalk_2D uses a modular architecture following SOLID design principles:
+
+- **Single Responsibility**: Each component (model service, TTS service, frame generation) has a distinct responsibility
+- **Open/Closed**: Components are extensible without requiring modification (e.g., the TTSService interface)
+- **Liskov Substitution**: Derived classes (like the enhanced frame generator) can be substituted for their base classes
+- **Interface Segregation**: Clean interfaces between components with minimal dependencies
+- **Dependency Inversion**: High-level modules depend on abstractions, not concrete implementations
+
+The system is divided into these main components:
+
+1. **ModelService**: Loads and manages neural network models (U-Net and Audio Encoder)
+2. **TTSService**: Handles text-to-speech synthesis with graceful fallback mechanisms
+3. **FrameGenerationService**: Generates animated frames from text or audio input
+4. **API Layer**: Exposes functionality through FastAPI endpoints with proper error handling
+
 ## Setting up
 Set up the environment
 ``` bash
@@ -18,6 +35,7 @@ conda install pytorch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 pytorch-cuda=
 conda install -c conda-forge ffmpeg  #very important
 pip install opencv-python transformers soundfile librosa onnxruntime-gpu configargparse
 pip install numpy==1.23.5
+pip install fastapi uvicorn pydantic python-multipart piper-tts
 ```
 
 ## Prepare your data
@@ -53,6 +71,106 @@ python inference_328.py --name data_name --audio_path path_to_audio.wav
 - example: python inference_328.py --name May --audio_path demo/talk_hb.wav
 
 - the result will be saved in the 'result' folder
+
+## Web Interface & API
+
+SyncTalk_2D now includes a web interface and API for real-time talking head animation. This allows you to generate animations through a browser using either text input (which gets converted to speech) or by uploading audio files directly.
+
+### Starting the Web Server
+
+```bash
+python api.py
+```
+
+This will start a FastAPI server on port 8000. You can access the web interface by visiting `http://localhost:8000` in your browser.
+
+### Features
+
+- **Text-to-Speech Animation**: Enter text and watch the avatar speak it in real-time
+- **Audio File Animation**: Upload a WAV file (16kHz, 16-bit PCM recommended) and see the avatar speak along with it
+- **Streaming API**: All animations are streamed frame-by-frame for real-time viewing
+- **Debug Mode**: Save generated frames and audio for troubleshooting and optimization
+- **Audio-Video Synchronization**: Precise timing to ensure lips match the audio perfectly
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Web interface |
+| `/generate` | GET | Generate animation from text (streaming) |
+| `/generate` | POST | Generate animation from text (JSON body) |
+| `/generate-from-audio` | POST | Generate animation from uploaded audio |
+| `/avatar` | GET | Get a static avatar frame |
+| `/get-tts-audio` | GET | Generate and download TTS audio |
+| `/health` | GET | Check service health |
+| `/debug/status` | GET | Get current debug settings |
+| `/debug/config` | POST | Update debug settings |
+
+### Configuration
+
+The application uses a centralized configuration system defined in `config.py`:
+
+```python
+from config import settings
+
+# Access configuration
+device = settings.models.device
+tts_model_path = settings.tts.model_path
+```
+
+Configuration sections include:
+- **models**: Neural network models and device settings
+- **tts**: Text-to-speech service configuration
+- **debug**: Debug and diagnostics settings
+
+### Debug Features
+
+SyncTalk_2D includes debug features to help troubleshoot issues:
+
+1. **Save Frames**: When enabled, each generated frame will be saved to the `debug/frames` directory
+2. **Save Audio**: When enabled, generated or uploaded audio will be saved to the `debug/audio` directory
+3. **Chunked Processing**: The system now processes audio in smaller chunks to enable real-time streaming
+
+To enable debug features:
+
+1. Use the debug panel in the web interface (click on "Debug Controls" at the bottom)
+2. Or update settings via API: `POST /debug/config` with JSON body:
+   ```json
+   {
+     "enabled": true,
+     "save_frames": true,
+     "save_audio": true
+   }
+   ```
+
+## Code Structure
+
+```
+├── api.py                 # FastAPI web server and endpoints
+├── config.py              # Central configuration management
+├── services/
+│   ├── models.py          # Neural network model management
+│   ├── tts.py             # Text-to-speech synthesis
+│   └── generator.py       # Frame generation and animation
+├── static/
+│   └── index.html         # Web interface
+├── utils.py               # Utility functions
+├── unet_328.py            # U-Net neural network architecture
+├── syncnet_328.py         # SyncNet for audio-visual synchronization
+├── inference_328.py       # Offline inference script
+└── training_328.sh        # Training script
+```
+
+## Best Practices Implemented
+
+- **Type Hints**: Extensive use of Python type annotations
+- **Error Handling**: Graceful fallbacks and detailed error logging
+- **Modularity**: Clear separation of concerns between components
+- **Documentation**: Comprehensive docstrings and comments
+- **Configuration**: Centralized, type-safe configuration with Pydantic
+- **Asynchronous Processing**: Efficient streaming with FastAPI async endpoints
+- **Dependency Injection**: Services use DI pattern for better testability
+- **Code Reuse**: Inheritance and composition for shared functionality
 
 ## Acknowledgements
 This code is based on [Ultralight-Digital-Human](https://github.com/anliyuan/Ultralight-Digital-Human) and [SyncTalk](https://github.com/ZiqiaoPeng/SyncTalk). We thank the authors for their excellent work.
