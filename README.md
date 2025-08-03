@@ -146,19 +146,20 @@ To enable debug features:
 ## Code Structure
 
 ```
-├── api.py                 # FastAPI web server and endpoints
-├── config.py              # Central configuration management
+├── api.py                       # FastAPI web server and endpoints
+├── config.py                    # Central configuration management
 ├── services/
-│   ├── models.py          # Neural network model management
-│   ├── tts.py             # Text-to-speech synthesis
-│   └── generator.py       # Frame generation and animation
+│   ├── models.py                # Neural network model management
+│   ├── tts.py                   # Text-to-speech synthesis
+│   └── generator.py             # Frame generation and animation
 ├── static/
-│   └── index.html         # Web interface
-├── utils.py               # Utility functions
-├── unet_328.py            # U-Net neural network architecture
-├── syncnet_328.py         # SyncNet for audio-visual synchronization
-├── inference_328.py       # Offline inference script
-└── training_328.sh        # Training script
+│   └── index.html               # Web interface
+├── utils.py                     # Utility functions
+├── unet_328.py                  # U-Net neural network architecture
+├── syncnet_328.py               # SyncNet for audio-visual synchronization
+├── inference_328.py             # Offline inference script
+├── train_328.py                 # Training script with checkpointing
+└── training_328.sh              # Training automation script
 ```
 
 ## Best Practices Implemented
