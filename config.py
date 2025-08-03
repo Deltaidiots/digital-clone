@@ -36,10 +36,10 @@ class ModelConfig(BaseModel):
         template_lms_path: Path to the landmarks file for the template image
     """
     device: str = 'cuda' if torch.cuda.is_available() else 'cpu'
-    checkpoint_path: str = "./checkpoint/May/4.pth" 
+    checkpoint_path: str = "./checkpoint/Awais/5.pth" 
     audio_encoder_ckpt: str = 'model/checkpoints/audio_visual_encoder.pth'
-    template_img_path: str = "./dataset/May/full_body_img/0.jpg"
-    template_lms_path: str = "./dataset/May/landmarks/0.lms"
+    template_img_path: str = "./dataset/Awais/full_body_img/0.jpg"
+    template_lms_path: str = "./dataset/Awais/landmarks/0.lms"
 
 class TTSConfig(BaseModel):
     """
@@ -75,6 +75,8 @@ class DebugConfig(BaseModel):
     save_audio: bool = False
     frames_dir: str = "./debug/frames"
     audio_dir: str = "./debug/audio"
+
+# Face enhancement config removed
 
 class AppConfig(BaseModel):
     """
