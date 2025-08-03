@@ -28,6 +28,6 @@ __pycache__/
 models/
 *.onnx
 *.json
+# all .pyc files
+*.pyc
 
-data_utils/ave/models/__pycache__/__init__.cpython-310.pyc
-data_utils/ave/models/__pycache__/audioEnc.cpython-310.pyc
