@@ -1,0 +1,44 @@
+@startuml audio-processing
+!theme plain
+title Audio Processing Pipeline
+
+start
+
+:Raw Audio Input\n(.wav file);
+
+partition "Preprocessing" {
+  :Load audio waveform;
+  :Convert to mel spectrogram;
+  note right: Standard audio\npreprocessing
+}
+
+partition "Feature Extraction" {
+  if (Audio Encoder Type?) then (AVE)
+    :AudioEncoder (AVE);
+    :Reshape to 32x16x16;
+    note right: Audio-Visual Encoder\nOptimized for lip sync
+  elseif (Hubert) then 
+    :HuBERT Model;
+    :Reshape to 32x32x32;
+    note right: Self-supervised\nspeech representation
+  elseif (WeNet) then
+    :WeNet Model;
+    :Reshape to 256x16x32;
+    note right: Speech recognition\nfeatures
+  endif
+}
+
+partition "Temporal Alignment" {
+  :Segment by frame rate;
+  note right: 25 FPS for AVE/Hubert\n20 FPS for WeNet
+  :Add temporal context;
+  note right: Include prev/next\nframe features
+  :Pad sequence boundaries;
+  note right: Repeat first/last\nframes
+}
+
+:Audio Features\nReady for Model;
+
+stop
+
+@enduml

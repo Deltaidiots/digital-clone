@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncTalk_2D - Real-time Talking Head Animation</title>
+    <style>
+        :root {
+            --primary-color: #61dafb;
+            --dark-bg: #282c34;
+            --darker-bg: #20232a;
+            --text-color: white;
+            --accent-color: #ff6b6b;
+            --success-color: #4caf50;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: var(--dark-bg); 
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        header {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 0;
+        }
+        
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        #video-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Increased to accommodate original video dimensions */
+            margin: 20px auto; /* Center the container */
+            text-align: center; /* Center the image */
+        }
+        
+        #video { 
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            width: 100%;
+            height: auto;  /* Let height be determined by the image's aspect ratio */
+            object-fit: contain;  /* Maintain the original aspect ratio */
+            background: var(--darker-bg);
+        }
+        
+        #controls { 
+            margin-top: 20px; 
+            width: 100%;
+            max-width: 640px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #4a4f5a;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background: var(--darker-bg);
+            color: var(--text-color);
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        #text-input-container, #audio-input-container {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        #text-input-form {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+        }
+        
+        #text-input {
+            flex: 1;
+            padding: 10px 15px;
+            background: var(--darker-bg);
+            color: var(--text-color);
+            border: 1px solid #4a4f5a;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: var(--darker-bg);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            background: #4a4f5a;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--darker-bg);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .success {
+            color: var(--success-color);
+        }
+        
+        .error {
+            color: var(--accent-color);
+        }
+        
+        #file-upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        #file-upload-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        #audio-file-input {
+            flex: 1;
+            padding: 10px;
+            background: var(--darker-bg);
+            color: var(--text-color);
+            border-radius: 4px;
+            border: 1px solid #4a4f5a;
+        }
+        
+        #file-info {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        /* Debug Panel Styles */
+        #debug-panel {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 640px;
+            background: #1f2228;
+            border: 1px solid #4a4f5a;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .debug-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        
+        .debug-panel-content {
+            padding: 10px;
+            background: var(--darker-bg);
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .debug-panel-content.open {
+            display: block;
+        }
+        
+        .debug-toggle-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4a4f5a;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .debug-paths {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SyncTalk_2D</h1>
+        <p class="subtitle">Real-time Talking Head Animation</p>
+    </header>
+    
+    <main>
+        <div id="video-container">
+            <img id="video" src="/avatar" alt="Talking head animation" />
+            <!-- Audio player for TTS playback -->
+            <div style="margin-top: 10px; display: flex; justify-content: center;">
+                <audio id="tts-audio" controls style="width: 100%; max-width: 640px;"></audio>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <div class="tab-buttons">
+                <button id="text-tab" class="tab-button active">Text-to-Speech</button>
+                <button id="audio-tab" class="tab-button">Upload Audio</button>
+            </div>
+            
+            <div id="text-input-container">
+                <form id="text-input-form">
+                    <input 
+                        type="text" 
+                        id="text-input" 
+                        placeholder="Enter text to animate..." 
+                        required
+                    />
+                    <button type="submit" id="generate-button">Animate</button>
+                </form>
+                <div id="status">Ready to animate. Enter text above.</div>
+            </div>
+            
+            <div id="audio-input-container" style="display: none;">
+                <form id="file-upload-form">
+                    <input 
+                        type="file" 
+                        id="audio-file-input" 
+                        accept=".wav" 
+                        required
+                    />
+                    <button type="submit" id="upload-button">Upload & Animate</button>
+                </form>
+                <div id="file-info">Only 16-bit PCM WAV files at 16kHz sample rate are supported.</div>
+                <div id="audio-status">Ready to animate. Upload a WAV file.</div>
+            </div>
+        </div>
+        
+        <!-- Debug Panel -->
+        <div id="debug-panel">
+            <div class="debug-panel-header">
+                <h3>Debug Controls</h3>
+                <span id="debug-toggle">▼</span>
+            </div>
+            <div class="debug-panel-content">
+                <div class="debug-toggle-group">
+                    <span>Enable Debug Mode</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="debug-enabled">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="debug-toggle-group">
+                    <span>Save Frames</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="save-frames">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="debug-toggle-group">
+                    <span>Save Audio</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="save-audio">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="debug-paths">
+                    <div id="frames-dir">Frames directory: </div>
+                    <div id="audio-dir">Audio directory: </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // DOM elements
+        const video = document.getElementById('video');
+        const ttsAudio = document.getElementById('tts-audio');
+        const textInput = document.getElementById('text-input');
+        const generateButton = document.getElementById('generate-button');
+        const status = document.getElementById('status');
+        const audioStatus = document.getElementById('audio-status');
+        const audioFileInput = document.getElementById('audio-file-input');
+        const uploadButton = document.getElementById('upload-button');
+        const textTab = document.getElementById('text-tab');
+        const audioTab = document.getElementById('audio-tab');
+        const textInputContainer = document.getElementById('text-input-container');
+        const audioInputContainer = document.getElementById('audio-input-container');
+        
+        // Debug panel elements
+        const debugToggle = document.getElementById('debug-toggle');
+        const debugPanelContent = document.querySelector('.debug-panel-content');
+        const debugEnabledCheckbox = document.getElementById('debug-enabled');
+        const saveFramesCheckbox = document.getElementById('save-frames');
+        const saveAudioCheckbox = document.getElementById('save-audio');
+        const framesDir = document.getElementById('frames-dir');
+        const audioDir = document.getElementById('audio-dir');
+        
+        // Toggle debug panel visibility
+        debugToggle.addEventListener('click', () => {
+            debugPanelContent.classList.toggle('open');
+            debugToggle.textContent = debugPanelContent.classList.contains('open') ? '▲' : '▼';
+        });
+        
+        // Fetch current debug status when page loads
+        async function fetchDebugStatus() {
+            try {
+                const response = await fetch('/debug/status');
+                const data = await response.json();
+                
+                // Update checkboxes
+                debugEnabledCheckbox.checked = data.enabled;
+                saveFramesCheckbox.checked = data.save_frames;
+                saveAudioCheckbox.checked = data.save_audio;
+                
+                // Update directory paths
+                framesDir.textContent = `Frames directory: ${data.frames_dir}`;
+                audioDir.textContent = `Audio directory: ${data.audio_dir}`;
+            } catch (error) {
+                console.error('Failed to fetch debug status:', error);
+            }
+        }
+        
+        // Update debug settings
+        async function updateDebugSettings() {
+            try {
+                const response = await fetch('/debug/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        enabled: debugEnabledCheckbox.checked,
+                        save_frames: saveFramesCheckbox.checked,
+                        save_audio: saveAudioCheckbox.checked
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                // Update directory paths
+                framesDir.textContent = `Frames directory: ${data.frames_dir}`;
+                audioDir.textContent = `Audio directory: ${data.audio_dir}`;
+                
+                // Show a status message
+                const originalStatus = status.textContent;
+                status.textContent = 'Debug settings updated';
+                setTimeout(() => {
+                    status.textContent = originalStatus;
+                }, 2000);
+            } catch (error) {
+                console.error('Failed to update debug settings:', error);
+            }
+        }
+        
+        // Add event listeners for debug checkboxes
+        debugEnabledCheckbox.addEventListener('change', updateDebugSettings);
+        saveFramesCheckbox.addEventListener('change', updateDebugSettings);
+        saveAudioCheckbox.addEventListener('change', updateDebugSettings);
+        
+        // Tab switching
+        textTab.addEventListener('click', () => {
+            textTab.classList.add('active');
+            audioTab.classList.remove('active');
+            textInputContainer.style.display = 'flex';
+            audioInputContainer.style.display = 'none';
+        });
+        
+        audioTab.addEventListener('click', () => {
+            audioTab.classList.add('active');
+            textTab.classList.remove('active');
+            audioInputContainer.style.display = 'flex';
+            textInputContainer.style.display = 'none';
+        });
+        
+        // Handle text input submission
+        document.getElementById('text-input-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const text = textInput.value;
+            if (!text.trim()) {
+                status.textContent = "Please enter text to animate.";
+                return;
+            }
+            
+            try {
+                // Disable button to prevent multiple submissions
+                generateButton.disabled = true;
+                status.textContent = "Generating animation and audio...";
+                status.classList.remove('success');
+                
+                // Set up audio source - we'll fetch the audio and prepare it for playback
+                // Use a timestamp to avoid caching
+                const timestamp = new Date().getTime();
+                const audioUrl = `/get-tts-audio?text=${encodeURIComponent(text)}&_=${timestamp}`;
+                
+                // Fetch the audio and get its duration from response headers
+                fetch(audioUrl)
+                    .then(response => {
+                        // Extract audio duration from header
+                        const audioDuration = parseFloat(response.headers.get('X-Audio-Duration') || '0');
+                        console.log(`Audio duration: ${audioDuration} seconds`);
+                        
+                        // Set the audio source
+                        return response.blob().then(blob => {
+                            const objectUrl = URL.createObjectURL(blob);
+                            ttsAudio.src = objectUrl;
+                            ttsAudio.load(); // Make sure the browser loads the audio
+                            return audioDuration;
+                        });
+                    })
+                    .then(audioDuration => {
+                        // Wait for audio to be loaded before setting up animation
+                        ttsAudio.oncanplaythrough = () => {
+                            // Set video source to the streaming endpoint with audio duration parameter
+                            // This will help the backend adjust frame rate to match audio duration
+                            video.src = `/generate?text=${encodeURIComponent(text)}&duration=${audioDuration}&_=${timestamp}`;
+                            
+                            // Once video starts loading, play the audio
+                            video.onload = () => {
+                                status.textContent = "Animation playing with audio...";
+                                status.classList.add('success');
+                                
+                                // Add a slight delay before playing audio to account for initial frame loading
+                                setTimeout(() => {
+                                    // Play audio when animation starts
+                                    ttsAudio.play().catch(error => {
+                                        console.error("Audio playback error:", error);
+                                        status.textContent = "Animation playing (audio failed to play)";
+                                    });
+                                }, 200); // 200ms delay
+                                
+                                generateButton.disabled = false;
+                            };
+                        };
+                    })
+                    .catch(error => {
+                        console.error("Error loading audio:", error);
+                        status.textContent = "Failed to load audio. Please try again.";
+                        status.classList.remove('success');
+                        generateButton.disabled = false;
+                    });
+                
+                // Handle errors for audio
+                ttsAudio.onerror = () => {
+                    console.error("Error loading audio:", ttsAudio.error);
+                    // Continue with animation even if audio fails
+                    status.textContent = "Audio failed to load. Continuing with animation only.";
+                    // Set video source to the streaming endpoint
+                    video.src = `/generate?text=${encodeURIComponent(text)}&_=${timestamp}`;
+                };
+                
+                // Handle errors for video
+                video.onerror = () => {
+                    status.textContent = "Failed to generate animation. Please try again.";
+                    status.classList.remove('success');
+                    generateButton.disabled = false;
+                    video.src = "/avatar";
+                    // Stop audio if animation fails
+                    ttsAudio.pause();
+                    ttsAudio.currentTime = 0;
+                };
+                
+                // Set a timeout to update status to complete after a reasonable time
+                setTimeout(() => {
+                    if (status.textContent === "Animation playing with audio...") {
+                        status.textContent = "Animation playing... (Note: Lip sync quality depends on the checkpoint used)";
+                        status.classList.add('success');
+                    }
+                }, 2000);
+                
+                // Add listener for when audio finishes playing
+                ttsAudio.onended = () => {
+                    status.textContent = "Animation complete! Type another message to animate.";
+                    status.classList.add('success');
+                    generateButton.disabled = false;
+                    // If animation is still showing the last frame, keep it
+                };
+                
+                // Backup timeout in case audio doesn't trigger onended event
+                setTimeout(() => {
+                    if (status.textContent.includes("Animation playing")) {
+                        status.textContent = "Animation complete! Type another message to animate.";
+                        status.classList.add('success');
+                        generateButton.disabled = false;
+                    }
+                }, 10000);
+                
+            } catch (error) {
+                console.error("Error generating animation:", error);
+                status.textContent = `Failed to generate animation: ${error.message}`;
+                status.classList.remove('success');
+                generateButton.disabled = false;
+                video.src = "/avatar";
+            }
+        });
+        
+        // Handle audio file submission
+        document.getElementById('file-upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const file = audioFileInput.files[0];
+            if (!file) {
+                audioStatus.textContent = "Please select a WAV file.";
+                return;
+            }
+            
+            if (!file.name.toLowerCase().endsWith('.wav')) {
+                audioStatus.textContent = "Only WAV files are supported.";
+                return;
+            }
+            
+            try {
+                // Disable button to prevent multiple submissions
+                uploadButton.disabled = true;
+                audioStatus.textContent = "Uploading and generating animation...";
+                audioStatus.classList.remove('success');
+                
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('audio_file', file);
+                
+                // Set video source to the streaming endpoint
+                // Using a direct multipart POST response is more reliable than redirects
+                const timestamp = new Date().getTime();
+                video.src = `/generate-from-audio?_=${timestamp}`;
+                
+                // Send the file in the background
+                fetch('/generate-from-audio', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server returned ${response.status}`);
+                    }
+                });
+                
+                // Check if video is loaded and playing
+                video.onload = () => {
+                    audioStatus.textContent = "Animation playing...";
+                    audioStatus.classList.add('success');
+                    uploadButton.disabled = false;
+                };
+                
+                // Handle errors
+                video.onerror = () => {
+                    audioStatus.textContent = "Failed to generate animation. Please try another audio file.";
+                    audioStatus.classList.remove('success');
+                    uploadButton.disabled = false;
+                    video.src = "/avatar";
+                };
+                
+                // Set a timeout to update status to complete after a reasonable time
+                setTimeout(() => {
+                    if (audioStatus.textContent === "Animation playing...") {
+                        audioStatus.textContent = "Animation playing... (Note: Lip sync quality depends on the checkpoint used)";
+                        audioStatus.classList.add('success');
+                    }
+                }, 2000);
+                
+                // After animation seems to be fully playing
+                setTimeout(() => {
+                    if (audioStatus.textContent.includes("Animation playing")) {
+                        audioStatus.textContent = "Animation complete! If lip sync seems off, try a different audio file or use text input.";
+                        audioStatus.classList.add('success');
+                    }
+                }, 8000);
+                
+            } catch (error) {
+                console.error("Error uploading audio:", error);
+                audioStatus.textContent = `Failed to upload audio: ${error.message}`;
+                audioStatus.classList.remove('success');
+                video.src = "/avatar";
+            } finally {
+                uploadButton.disabled = false;
+            }
+        });
+        
+        // Fetch debug status when page loads
+        window.addEventListener('DOMContentLoaded', fetchDebugStatus);
+    </script>
+</body>
+</html>

@@ -8,30 +8,45 @@ from torch import optim
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from unet_328 import Model
-from tqdm import tqdm
 from utils import AudioEncoder, AudDataset, get_audio_features
-# from unet2 import Model
-# from unet_att import Model
+from config import settings
+import logging
 
-import time
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Enhancement features removed
+
 parser = argparse.ArgumentParser(description='Train',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('--asr', type=str, default="ave")
-parser.add_argument('--name', type=str, default="May")
-parser.add_argument('--audio_path', type=str, default="demo/talk_hb.wav")
-parser.add_argument('--start_frame', type=int, default=0)
-parser.add_argument('--parsing', type=bool, default=False)
+parser.add_argument('--asr', type=str, default="ave", 
+                    help='Audio feature type: ave, hubert, or wenet')
+parser.add_argument('--name', type=str, default="May",
+                    help='Character name, corresponding to a subdirectory in checkpoint/')
+parser.add_argument('--audio_path', type=str, default="demo/talk_hb.wav",
+                    help='Path to input audio file')
+parser.add_argument('--start_frame', type=int, default=0,
+                    help='Starting frame index')
+parser.add_argument('--parsing', type=bool, default=False,
+                    help='Whether to use parsing images for masking')
+# Enhancement arguments removed
 args = parser.parse_args()
 
 checkpoint_path = os.path.join("./checkpoint", args.name)
-# 获取checkpoint_path目录下数字最大的.pth文件，按照int排序
+# Get the checkpoint file with the highest number in its name
 checkpoint = os.path.join(checkpoint_path, sorted(os.listdir(checkpoint_path), key=lambda x: int(x.split(".")[0]))[-1])
-print(checkpoint)
+logging.info(f"Using checkpoint: {checkpoint}")
+
 save_path = os.path.join("./result", args.name+"_"+args.audio_path.split("/")[-1].split(".")[0]+"_"+checkpoint.split("/")[-1].split(".")[0]+".mp4")
 dataset_dir = os.path.join("./dataset", args.name)
 audio_path = args.audio_path
 mode = args.asr
+
+# Face enhancement initialization removed
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -150,10 +165,15 @@ for i in tqdm(range(audio_feats.shape[0])):
     # crop_img_ori = crop_img_ori[:y_gap,:]
     # cv2.imwrite(f"./temp/{i}.jpg", crop_img_ori)
     # img[ymin:ymin+y_gap, xmin:xmax] = crop_img_ori
+    
+    # Face enhancement application removed
+    
     video_writer.write(img)
 video_writer.release()
 
-# os.system(f"ffmpeg -i {save_path.replace('.mp4', 'temp.mp4')} -i {audio_path} -c:v libx264 -c:a aac {save_path}")
-os.system(f"ffmpeg -i {save_path.replace('.mp4', 'temp.mp4')} -i {audio_path} -c:v libx264 -c:a aac -crf 20 {save_path} -y")
+# Use standard quality CRF value
+crf_value = 20
+logging.info(f"Generating final video with ffmpeg (quality CRF: {crf_value})")
+os.system(f"ffmpeg -i {save_path.replace('.mp4', 'temp.mp4')} -i {audio_path} -c:v libx264 -c:a aac -crf {crf_value} {save_path} -y")
 os.system(f"rm {save_path.replace('.mp4', 'temp.mp4')}")
-print(f"[INFO] ===== save video to {save_path} =====")
+logging.info(f"Video saved to {save_path}")

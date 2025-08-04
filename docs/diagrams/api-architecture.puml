@@ -1,0 +1,75 @@
+@startuml api-architecture
+!theme plain
+title API Architecture
+
+package "Client Layer" {
+  [Web Browser] as Browser
+  [Python Client] as PyClient
+  [JavaScript App] as JSApp
+  [cURL/REST Client] as RESTClient
+}
+
+package "API Gateway" {
+  [FastAPI Server] as FastAPI
+  [Authentication] as Auth
+  [Rate Limiting] as RateLimit
+  [Request Validation] as Validation
+}
+
+package "Service Layer" {
+  [TTS Service] as TTSService
+  [Model Service] as ModelService
+  [Frame Generator] as FrameGen
+  [Debug Service] as DebugService
+}
+
+package "Core Engine" {
+  [U-Net Model] as UNet
+  [Audio Encoder] as AudioEnc
+  [Template Manager] as TemplateManager
+}
+
+package "Storage" {
+  [Model Checkpoints] as Checkpoints
+  [Template Images] as Templates
+  [Debug Files] as DebugFiles
+}
+
+' Client connections
+Browser --> FastAPI : HTTP/WebSocket
+PyClient --> FastAPI : REST API
+JSApp --> FastAPI : REST API
+RESTClient --> FastAPI : HTTP
+
+' API processing
+FastAPI --> Auth : Validate request
+FastAPI --> RateLimit : Check limits
+FastAPI --> Validation : Validate input
+
+' Service routing
+FastAPI --> TTSService : Text → Audio
+FastAPI --> ModelService : Generate frames
+FastAPI --> FrameGen : Assemble video
+FastAPI --> DebugService : Debug operations
+
+' Core processing
+TTSService --> AudioEnc : Process audio
+ModelService --> UNet : Generate faces
+ModelService --> TemplateManager : Load templates
+FrameGen --> UNet : Frame generation
+
+' Storage access
+UNet --> Checkpoints : Load model
+TemplateManager --> Templates : Load images
+DebugService --> DebugFiles : Save debug data
+
+' Streaming responses
+FastAPI -.-> Browser : SSE Stream
+FastAPI -.-> PyClient : Chunked response
+FastAPI -.-> JSApp : SSE Stream
+
+note right of FastAPI : Async processing\nReal-time streaming
+note right of UNet : GPU accelerated\nReal-time inference
+note right of TTSService : Piper TTS\nHigh quality speech
+
+@enduml

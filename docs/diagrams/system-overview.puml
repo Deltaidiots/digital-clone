@@ -1,0 +1,68 @@
+@startuml system-overview
+!theme plain
+title SyncTalk_2D System Overview
+
+!define RECTANGLE class
+
+package "Input Layer" {
+  [Audio File (.wav)] as Audio
+  [Template Image] as Image
+  [Text Input] as Text
+}
+
+package "Processing Layer" {
+  [TTS Service] as TTS
+  [Audio Encoder] as AudioEnc
+  [Face Detection] as FaceDetect
+  [Landmark Extraction] as Landmarks
+}
+
+package "Core Model" {
+  [U-Net Generator] as UNet
+  [Audio Features] as AudioFeat
+  [Masked Image] as MaskedImg
+}
+
+package "Output Layer" {
+  [Frame Generation] as FrameGen
+  [Video Assembly] as VideoAsm
+  [Final Video] as Video
+}
+
+package "API Layer" {
+  [FastAPI Server] as API
+  [Web Interface] as Web
+  [REST Endpoints] as REST
+}
+
+' Input flow
+Text --> TTS : "Convert to speech"
+TTS --> Audio : "Generate audio"
+Audio --> AudioEnc : "Extract features"
+AudioEnc --> AudioFeat : "Deep features"
+
+Image --> FaceDetect : "Detect face"
+FaceDetect --> Landmarks : "Extract landmarks"
+Landmarks --> MaskedImg : "Create masked input"
+
+' Core processing
+AudioFeat --> UNet : "Audio conditioning"
+MaskedImg --> UNet : "Visual input"
+UNet --> FrameGen : "Generated face"
+
+' Output assembly
+FrameGen --> VideoAsm : "Frame sequence"
+VideoAsm --> Video : "Final output"
+
+' API integration
+API --> TTS : "Text processing"
+API --> UNet : "Generation"
+API --> VideoAsm : "Output creation"
+Web --> API : "User requests"
+REST --> API : "External requests"
+
+note right of UNet : Single-stage\nEnd-to-end\nLearning
+note right of AudioFeat : AVE/Hubert/WeNet\nencoding options
+note right of FrameGen : 328x328 resolution\nReal-time capable
+
+@enduml

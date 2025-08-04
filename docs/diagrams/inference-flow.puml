@@ -1,0 +1,62 @@
+@startuml inference-flow
+!theme plain
+title Inference Data Flow
+
+start
+
+:Input audio file;
+:Character name;
+
+partition "Audio Processing" {
+  :Load audio file (.wav);
+  :Convert to mel spectrogram;
+  :Extract features with AudioEncoder;
+  note right: Pre-trained model\nfor audio-visual sync
+  :Batch process audio;
+  :Add temporal padding;
+}
+
+partition "Template Preparation" {
+  :Load character checkpoint;
+  :Load template images;
+  :Load facial landmarks;
+  note right: From training dataset:\n- full_body_img/\n- landmarks/
+}
+
+partition "Frame Generation Loop" {
+  repeat
+    :Select template frame;
+    note right: Bouncing between\nframes for natural movement
+    
+    :Extract face region;
+    note right: Based on landmarks:\nxmin, ymin, xmax, ymax
+    
+    :Resize to 328x328;
+    :Create masked input;
+    note right: Mask lower face\n(mouth region)
+    
+    :Get audio features;
+    note right: For current frame\ntimestamp
+    
+    :U-Net inference;
+    note right: Generate 320x320\nlower face region
+    
+    :Reconstruct full face;
+    :Paste back to full frame;
+    :Write frame to video;
+    
+  repeat while (more frames?)
+}
+
+partition "Video Assembly" {
+  :Combine frames to video;
+  :Add original audio track;
+  :Apply quality settings;
+  note right: CRF encoding\nwith ffmpeg
+}
+
+:Output final video;
+
+stop
+
+@enduml
