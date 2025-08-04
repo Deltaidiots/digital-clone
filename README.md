@@ -148,6 +148,12 @@ To enable debug features:
 ```
 ├── api.py                       # FastAPI web server and endpoints
 ├── config.py                    # Central configuration management
+├── docs/                        # Documentation
+│   ├── architecture.md          # System architecture overview
+│   ├── model-details.md         # Detailed model architecture and specifications
+│   ├── data-flow.md            # Data processing pipelines and flow
+│   ├── training-guide.md       # Comprehensive training guide
+│   └── api-reference.md        # API endpoints and usage
 ├── services/
 │   ├── models.py                # Neural network model management
 │   ├── tts.py                   # Text-to-speech synthesis
@@ -161,6 +167,27 @@ To enable debug features:
 ├── train_328.py                 # Training script with checkpointing
 └── training_328.sh              # Training automation script
 ```
+
+## Documentation
+
+For detailed information about the system:
+
+- **[Architecture Overview](docs/architecture.md)**: High-level system design and components
+- **[Model Details](docs/model-details.md)**: Deep dive into the U-Net architecture and training
+- **[Data Flow](docs/data-flow.md)**: How data flows through training and inference pipelines
+- **[Training Guide](docs/training-guide.md)**: Complete guide to training your own models
+- **[API Reference](docs/api-reference.md)**: REST API endpoints and usage examples
+
+### Visual Diagrams
+
+The documentation includes detailed PlantUML diagrams that illustrate:
+- System architecture and component relationships
+- U-Net neural network structure
+- Training and inference data flows
+- Audio processing pipelines
+- API architecture
+
+View the diagrams at [PlantUML Online](http://www.plantuml.com/plantuml/uml/) by copying the code from `docs/diagrams/` or install a PlantUML viewer in your IDE.
 
 ## Best Practices Implemented
 

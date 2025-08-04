@@ -1,0 +1,74 @@
+@startuml unet-architecture
+!theme plain
+title U-Net Architecture for SyncTalk_2D
+
+!define LAYER rectangle
+
+package "Input" {
+  LAYER "Image Input\n(328x328x6)" as InputImg {
+    LAYER "Original Face\n(masked lower)" as OrigFace
+    LAYER "Fully Masked\nVersion" as MaskedFace
+  }
+  LAYER "Audio Features\n(varies by encoder)" as AudioInput
+}
+
+package "Encoder (Downsampling)" {
+  LAYER "Conv 64\n(164x164)" as E1
+  LAYER "Conv 128\n(82x82)" as E2
+  LAYER "Conv 256\n(41x41)" as E3
+  LAYER "Conv 512\n(20x20)" as E4
+  LAYER "Conv 1024\n(10x10)" as E5
+}
+
+package "Bottleneck" {
+  LAYER "Audio-Visual\nFusion\n(5x5)" as Bottleneck
+  LAYER "Audio Processing\nBranch" as AudioBranch
+}
+
+package "Decoder (Upsampling)" {
+  LAYER "TransConv 512\n(10x10)" as D1
+  LAYER "TransConv 256\n(20x20)" as D2
+  LAYER "TransConv 128\n(41x41)" as D3
+  LAYER "TransConv 64\n(82x82)" as D4
+  LAYER "TransConv 3\n(164x164)" as D5
+  LAYER "Final Conv\n(320x320x3)" as Output
+}
+
+' Forward path
+InputImg --> E1 : "Conv2D + BN + ReLU"
+E1 --> E2 : "Downsample 2x"
+E2 --> E3 : "Downsample 2x"
+E3 --> E4 : "Downsample 2x"
+E4 --> E5 : "Downsample 2x"
+E5 --> Bottleneck : "Feature extraction"
+
+' Audio integration
+AudioInput --> AudioBranch : "Reshape & process"
+AudioBranch --> Bottleneck : "Feature fusion"
+
+' Decoder path
+Bottleneck --> D1 : "TransConv + BN + ReLU"
+D1 --> D2 : "Upsample 2x"
+D2 --> D3 : "Upsample 2x"
+D3 --> D4 : "Upsample 2x"
+D4 --> D5 : "Upsample 2x"
+D5 --> Output : "Generate face"
+
+' Skip connections
+E4 -.-> D2 : "Skip connection"
+E3 -.-> D3 : "Skip connection"
+E2 -.-> D4 : "Skip connection"
+E1 -.-> D5 : "Skip connection"
+
+note right of Bottleneck : Audio features modulate\nvisual representation
+note right of Output : 320x320 RGB\nGenerated lower face
+note left of InputImg : 6 channels:\n3 original + 3 masked
+
+' Audio feature dimensions
+note bottom of AudioInput
+  AVE: 32x16x16
+  Hubert: 32x32x32
+  WeNet: 256x16x32
+end note
+
+@enduml

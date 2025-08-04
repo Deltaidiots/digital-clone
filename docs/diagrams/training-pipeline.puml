@@ -1,0 +1,49 @@
+@startuml training-pipeline
+!theme plain
+title Training Data Pipeline
+
+start
+
+:Record 5+ minute video;
+note right: Requirements:\n- 1080p+ resolution\n- Consistent lighting\n- Static background\n- Clear audio
+
+:Place video in dataset/NAME/;
+
+:Run training_328.sh;
+
+partition "Data Preprocessing" {
+  :Extract frames at 25fps;
+  :Extract audio track;
+  :Detect faces in frames;
+  :Extract facial landmarks;
+  :Process audio features;
+  note right: Creates:\n- full_body_img/\n- landmarks/\n- aud.wav\n- aud_ave.npy
+}
+
+partition "Training Loop" {
+  :Load training batch;
+  note right: Batch contains:\n- Original frames\n- Audio segments\n- Landmark data
+  
+  :Create masked inputs;
+  note right: Mask lower face\nregion for generation
+  
+  :Forward pass through U-Net;
+  note right: Audio features +\nMasked image → Generated face
+  
+  :Calculate loss;
+  note right: L1/L2 loss between\ngenerated and ground truth
+  
+  :Backpropagation;
+  :Update weights;
+  :Save checkpoint?;
+  note right: Every 10 epochs
+}
+
+:Training complete\n(~5 hours);
+
+:Select best checkpoint;
+note right: Based on:\n- Visual quality\n- Lip sync accuracy\n- Stability
+
+stop
+
+@enduml
